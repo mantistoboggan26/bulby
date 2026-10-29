@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f2f4ee">
+  <title>BulbSwap | A brighter little exchange</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202820;
+      --muted: #72796f;
+      --paper: #f2f4ee;
+      --surface: #fffefa;
+      --line: #e4e8df;
+      --green: #245c43;
+      --green-soft: #e5f0e8;
+      --yellow: #f1bd42;
+      --yellow-soft: #fff4d5;
+      --red: #a63d32;
+      --red-soft: #fae9e5;
+      --blue: #385e78;
+      --blue-soft: #e8f0f5;
+      --shadow: 0 12px 32px rgb(34 49 36 / 6%);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#dce3d8 0.7px, transparent 0.7px);
+      background-size: 19px 19px;
+      font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #90b59d; outline-offset: 2px; }
+    .topbar {
+      position: sticky;
+      z-index: 3;
+      top: 0;
+      border-bottom: 1px solid rgb(228 232 223 / 85%);
+      background: rgb(255 254 250 / 94%);
+      backdrop-filter: blur(12px);
+    }
+    .topbar-inner, main { width: min(100% - 40px, 760px); margin-inline: auto; }
+    .topbar-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 39px; aspect-ratio: 1; display: grid; place-items: center;
+      border-radius: 12px; color: #473711; background: var(--yellow-soft); font-size: 21px;
+    }
+    .brand-name { font: 700 23px/1 Georgia, "Times New Roman", serif; letter-spacing: 0; }
+    .brand-note { margin-top: 5px; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+    .role-switch { display: flex; padding: 4px; border: 1px solid var(--line); border-radius: 9px; background: #f6f7f2; }
+    .role-button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 13px; font-weight: 700; }
+    .role-button[aria-pressed="true"] { color: white; background: var(--ink); box-shadow: 0 2px 6px rgb(25 37 26 / 14%); }
+    main { padding: 27px 0 64px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin: 0 0 19px; }
+    h1 { margin: 0; font: 500 32px/1.1 Georgia, "Times New Roman", serif; letter-spacing: 0; }
+    .intro p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .sync-label { display: flex; align-items: center; gap: 7px; padding-bottom: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #7d9a64; box-shadow: 0 0 0 3px #e6eddf; }
+    .panel { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .form-panel { padding: 24px; animation: arrive .32s ease-out both; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 23px; }
+    h2 { margin: 0; font: 600 21px/1.2 Georgia, "Times New Roman", serif; letter-spacing: 0; }
+    .eyebrow { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .field-label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
+    .quantity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .quantity-option { min-height: 76px; display: grid; place-items: center; align-content: center; gap: 3px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: white; transition: border-color .16s, background .16s, transform .16s; }
+    .quantity-option:hover { transform: translateY(-1px); border-color: #9ab39a; }
+    .quantity-option[aria-pressed="true"] { border: 2px solid #d5a62d; background: var(--yellow-soft); }
+    .bulb-count { color: #a0781e; font-size: 18px; letter-spacing: 3px; }
+    .quantity-copy { font-size: 13px; font-weight: 700; }
+    .price-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 19px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 7px; background: #f7f8f3; }
+    .price-row span:first-child { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .price-value { color: #85610f; font: 700 21px/1 Georgia, "Times New Roman", serif; }
+    .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 21px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .total-label { color: var(--muted); font-size: 12px; }
+    .total-value { margin-top: 3px; font: 700 27px/1 Georgia, "Times New Roman", serif; }
+    .primary-button, .secondary-button, .quiet-button { min-height: 42px; padding: 0 17px; border: 0; border-radius: 6px; font-size: 13px; font-weight: 700; transition: background .16s, transform .16s; }
+    .primary-button { color: white; background: var(--green); }
+    .primary-button:hover { background: #194b35; transform: translateY(-1px); }
+    .secondary-button { color: white; background: var(--blue); }
+    .secondary-button:hover { background: #294d67; }
+    .quiet-button { border: 1px solid var(--line); color: var(--ink); background: white; }
+    .seller-panel { margin-bottom: 28px; }
+    .seller-content { padding: 23px 24px 24px; }
+    .seller-price-fields { display: flex; align-items: end; gap: 10px; }
+    .input-wrap { flex: 1; }
+    .seller-price-input { width: 100%; min-height: 44px; padding: 0 13px; border: 1px solid #d9dfd6; border-radius: 6px; color: var(--ink); background: #fbfcf9; font-size: 17px; font-weight: 700; }
+    .board { margin-top: 29px; }
+    .board-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .order-count { min-width: 24px; padding: 4px 8px; border-radius: 20px; color: var(--green); background: var(--green-soft); text-align: center; font-size: 11px; font-weight: 700; }
+    .orders-list { display: grid; gap: 10px; }
+    .empty-state { padding: 36px 20px; color: var(--muted); text-align: center; }
+    .empty-icon { margin-bottom: 8px; color: #967523; font-size: 23px; }
+    .empty-title { color: var(--ink); font: 600 17px Georgia, "Times New Roman", serif; }
+    .empty-copy { margin-top: 5px; font-size: 13px; }
+    .order-card { padding: 17px 19px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 4px 14px rgb(34 49 36 / 4%); animation: arrive .25s ease-out both; }
+    .order-top { display: flex; justify-content: space-between; gap: 12px; }
+    .order-title { margin: 0; font-size: 15px; font-weight: 750; }
+    .order-meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .order-total { font: 700 20px/1 Georgia, "Times New Roman", serif; white-space: nowrap; }
+    .order-details { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; }
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: 750; }
+    .status-requested { color: #79590f; background: var(--yellow-soft); }
+    .status-delayed { color: var(--red); background: var(--red-soft); }
+    .status-delivered { color: var(--blue); background: var(--blue-soft); }
+    .status-done { color: var(--green); background: var(--green-soft); }
+    .order-date { color: var(--muted); font-size: 11px; }
+    .delay-note { margin-top: 11px; padding: 9px 11px; border-left: 2px solid #d78070; color: #883e34; background: #fcf2ef; font-size: 12px; }
+    .order-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 13px; border-top: 1px solid #edf0e9; }
+    .order-actions button { min-height: 36px; flex: 1; padding-inline: 10px; }
+    .confirm-button { min-height: 38px; width: 100%; margin-top: 13px; }
+    .waiting { margin-top: 13px; padding-top: 12px; border-top: 1px solid #edf0e9; color: var(--muted); font-size: 12px; text-align: center; }
+    .done-message { margin-top: 13px; padding-top: 12px; border-top: 1px solid #edf0e9; color: var(--green); font-size: 12px; font-weight: 700; text-align: center; }
+    .delete-button { min-height: 30px; padding: 0 8px; border: 0; color: #8d958b; background: transparent; font-size: 12px; }
+    .delete-button:hover { color: var(--red); }
+    .dialog-backdrop { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(26 35 27 / 55%); }
+    .dialog-backdrop[hidden] { display: none; }
+    .dialog { width: min(100%, 400px); padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 20px 70px rgb(0 0 0 / 20%); }
+    .dialog h2 { margin-bottom: 7px; }
+    .dialog p { margin: 0 0 15px; color: var(--muted); font-size: 13px; }
+    .dialog input { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid #d9dfd6; border-radius: 6px; }
+    .dialog-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .dialog-actions button { flex: 1; }
+    .delay-submit { color: white; background: var(--red); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 540px) {
+      .topbar-inner, main { width: min(100% - 28px, 760px); }
+      .topbar-inner { min-height: 68px; }
+      .brand-name { font-size: 21px; }
+      .role-button { padding-inline: 10px; font-size: 12px; }
+      main { padding-top: 23px; }
+      h1 { font-size: 28px; }
+      .intro { align-items: start; }
+      .sync-label { padding-top: 4px; font-size: 11px; }
+      .form-panel, .seller-content { padding: 19px; }
+      .quantity-grid { gap: 7px; }
+      .quantity-option { min-height: 70px; }
+      .form-footer { align-items: end; }
+      .primary-button { padding-inline: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" aria-label="BulbSwap home">
+        <span class="brand-mark" aria-hidden="true">&#x1F4A1;</span>
+        <div>
+          <div class="brand-name">BulbSwap</div>
+          <div class="brand-note">A brighter little exchange</div>
+        </div>
+      </div>
+      <div class="role-switch" role="group" aria-label="Choose your role">
+        <button class="role-button" id="buyerRole" type="button" aria-pressed="true">Buyer</button>
+        <button class="role-button" id="sellerRole" type="button" aria-pressed="false">Seller</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="intro">
+      <div>
+        <h1 id="pageTitle">A little light, on request.</h1>
+        <p id="pageSubtitle">Choose what you need and send it over.</p>
+      </div>
+      <div class="sync-label" aria-live="polite"><span class="sync-dot"></span><span id="storageLabel">Saved on this device</span></div>
+    </div>
+
+    <section class="panel form-panel" id="buyerPanel" aria-labelledby="requestHeading">
+      <div class="section-heading">
+        <h2 id="requestHeading">Request bulbs</h2>
+        <span class="eyebrow">Up to 3 per request</span>
+      </div>
+      <label class="field-label">How many bulbs?</label>
+      <div class="quantity-grid" role="group" aria-label="Choose a quantity">
+        <button class="quantity-option" type="button" data-quantity="1" aria-pressed="true"><span class="bulb-count" aria-hidden="true">&#x1F4A1;</span><span class="quantity-copy">1 bulb</span></button>
+        <button class="quantity-option" type="button" data-quantity="2" aria-pressed="false"><span class="bulb-count" aria-hidden="true">&#x1F4A1;&#x1F4A1;</span><span class="quantity-copy">2 bulbs</span></button>
+        <button class="quantity-option" type="button" data-quantity="3" aria-pressed="false"><span class="bulb-count" aria-hidden="true">&#x1F4A1;&#x1F4A1;&#x1F4A1;</span><span class="quantity-copy">3 bulbs</span></button>
+      </div>
+      <div class="price-row"><span>Current price per bulb</span><strong class="price-value" id="unitPrice">$3.50</strong></div>
+      <div class="form-footer">
+        <div><div class="total-label">Your total</div><div class="total-value" id="totalPrice">$3.50</div></div>
+        <button class="primary-button" id="submitRequest" type="button">Send request <span aria-hidden="true">&#8594;</span></button>
+      </div>
+    </section>
+
+    <section class="panel seller-panel" id="sellerPanel" aria-labelledby="sellerHeading" hidden>
+      <div class="seller-content">
+        <div class="section-heading">
+          <h2 id="sellerHeading">Price control</h2>
+          <span class="eyebrow">Per bulb</span>
+        </div>
+        <label class="field-label" for="sellerPrice">Set the current price</label>
+        <div class="seller-price-fields">
+          <div class="input-wrap"><input class="seller-price-input" id="sellerPrice" type="number" min="0.01" max="9999" step="0.50" value="3.50" inputmode="decimal" aria-label="Price per bulb in dollars"></div>
+          <button class="secondary-button" id="savePrice" type="button">Save price</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="board" aria-labelledby="boardHeading">
+      <div class="board-heading"><h2 id="boardHeading">Active board</h2><span class="order-count" id="orderCount">0</span></div>
+      <div class="orders-list" id="ordersList" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div class="dialog-backdrop" id="delayDialog" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="delayHeading">
+      <h2 id="delayHeading">Report a delay</h2>
+      <p>Let the buyer know what changed.</p>
+      <label class="field-label" for="delayReason">Delay note</label>
+      <input id="delayReason" type="text" maxlength="160" placeholder="For example, running 10 minutes late">
+      <div class="dialog-actions">
+        <button class="quiet-button" id="cancelDelay" type="button">Cancel</button>
+        <button class="primary-button delay-submit" id="confirmDelay" type="button">Send notice</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'bulbswap_state_v1';
+      const state = { role: 'buyer', quantity: 1, currentPrice: 3.5, orders: [], delayOrderId: null };
+      const elements = {
+        buyerRole: document.getElementById('buyerRole'), sellerRole: document.getElementById('sellerRole'),
+        buyerPanel: document.getElementById('buyerPanel'), sellerPanel: document.getElementById('sellerPanel'),
+        pageTitle: document.getElementById('pageTitle'), pageSubtitle: document.getElementById('pageSubtitle'),
+        unitPrice: document.getElementById('unitPrice'), totalPrice: document.getElementById('totalPrice'),
+        sellerPrice: document.getElementById('sellerPrice'), ordersList: document.getElementById('ordersList'),
+        orderCount: document.getElementById('orderCount'), delayDialog: document.getElementById('delayDialog'),
+        delayReason: document.getElementById('delayReason'), storageLabel: document.getElementById('storageLabel')
+      };
+
+      const money = value => `$${Number(value).toFixed(2)}`;
+      const readStore = () => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+          if (saved && typeof saved === 'object') {
+            if (Number.isFinite(saved.currentPrice) && saved.currentPrice > 0) state.currentPrice = saved.currentPrice;
+            if (Array.isArray(saved.orders)) state.orders = saved.orders.filter(order => order && typeof order.id === 'string');
+          }
+        } catch { elements.storageLabel.textContent = 'Storage unavailable'; }
+      };
+      const writeStore = () => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentPrice: state.currentPrice, orders: state.orders }));
+          elements.storageLabel.textContent = 'Saved on this device';
+        } catch { elements.storageLabel.textContent = 'Could not save'; }
+      };
+
+      function updateTotal() {
+        elements.unitPrice.textContent = money(state.currentPrice);
+        elements.totalPrice.textContent = money(state.currentPrice * state.quantity);
+        elements.sellerPrice.value = state.currentPrice.toFixed(2);
+      }
+
+      function setRole(role) {
+        state.role = role;
+        const buyer = role === 'buyer';
+        elements.buyerRole.setAttribute('aria-pressed', String(buyer));
+        elements.sellerRole.setAttribute('aria-pressed', String(!buyer));
+        elements.buyerPanel.hidden = !buyer;
+        elements.sellerPanel.hidden = buyer;
+        elements.pageTitle.textContent = buyer ? 'A little light, on request.' : 'Keep the good light moving.';
+        elements.pageSubtitle.textContent = buyer ? 'Choose what you need and send it over.' : 'Set your price and keep requests moving.';
+        renderOrders();
+      }
+
+      function makeStatus(order) {
+        const labels = {
+          REQUESTED: ['Requested', 'status-requested'], DELAYED: ['Delayed', 'status-delayed'],
+          DELIVERED: ['Delivered', 'status-delivered'], DONE: ['Complete', 'status-done']
+        };
+        const [label, className] = labels[order.status] || labels.REQUESTED;
+        const badge = document.createElement('span');
+        badge.className = `status ${className}`;
+        badge.textContent = label;
+        return badge;
+      }
+
+      function makeButton(text, className, action, orderId) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.textContent = text;
+        button.addEventListener('click', () => action(orderId));
+        return button;
+      }
+
+      function renderOrders() {
+        elements.ordersList.replaceChildren();
+        elements.orderCount.textContent = String(state.orders.length);
+        if (!state.orders.length) {
+          const empty = document.createElement('div');
+          empty.className = 'panel empty-state';
+          const icon = document.createElement('div');
+          icon.className = 'empty-icon';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = '\u{1F4A1}';
+          const title = document.createElement('div');
+          title.className = 'empty-title';
+          title.textContent = 'Nothing on the board yet';
+          const copy = document.createElement('div');
+          copy.className = 'empty-copy';
+          copy.textContent = state.role === 'buyer' ? 'Your requests will show up here.' : 'New buyer requests will show up here.';
+          empty.append(icon, title, copy);
+          elements.ordersList.append(empty);
+          return;
+        }
+
+        for (const order of state.orders) {
+          const card = document.createElement('article');
+          card.className = 'order-card';
+          const top = document.createElement('div');
+          top.className = 'order-top';
+          const details = document.createElement('div');
+          const title = document.createElement('h3');
+          title.className = 'order-title';
+          title.textContent = `${order.qty} ${order.qty === 1 ? 'bulb' : 'bulbs'}`;
+          const meta = document.createElement('div');
+          meta.className = 'order-meta';
+          meta.textContent = `${money(order.pricePer)} each`;
+          details.append(title, meta);
+          const total = document.createElement('strong');
+          total.className = 'order-total';
+          total.textContent = money(order.total);
+          top.append(details, total);
+
+          const statusRow = document.createElement('div');
+          statusRow.className = 'order-details';
+          statusRow.append(makeStatus(order));
+          const date = document.createElement('time');
+          date.className = 'order-date';
+          date.textContent = new Date(order.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+          statusRow.append(date);
+          card.append(top, statusRow);
+
+          if (order.status === 'DELAYED' && order.delayReason) {
+            const note = document.createElement('div');
+            note.className = 'delay-note';
+            const label = document.createElement('strong');
+            label.textContent = 'Delay note: ';
+            note.append(label, document.createTextNode(order.delayReason));
+            card.append(note);
+          }
+
+          const remove = makeButton('Remove', 'delete-button', deleteOrder, order.id);
+          remove.setAttribute('aria-label', `Remove request for ${order.qty} ${order.qty === 1 ? 'bulb' : 'bulbs'}`);
+          statusRow.append(remove);
+
+          if (order.status === 'DONE') {
+            const done = document.createElement('div');
+            done.className = 'done-message';
+            done.textContent = 'Payment and collection confirmed by both sides';
+            card.append(done);
+          } else if (state.role === 'seller' && ['REQUESTED', 'DELAYED'].includes(order.status)) {
+            const actions = document.createElement('div');
+            actions.className = 'order-actions';
+            actions.append(
+              makeButton('Report delay', 'quiet-button', openDelay, order.id),
+              makeButton('Mark delivered', 'secondary-button', markDelivered, order.id)
+            );
+            card.append(actions);
+          } else if (state.role === 'seller' && order.status === 'DELIVERED') {
+            card.append(order.sellerChecked ? waitingMessage('Waiting for buyer to confirm...') : makeButton('Confirm payment received', 'primary-button confirm-button', confirmOrder, order.id));
+          } else if (state.role === 'buyer' && order.status === 'DELIVERED') {
+            card.append(order.buyerChecked ? waitingMessage('Waiting for seller to confirm...') : makeButton('Confirm collection and payment', 'primary-button confirm-button', confirmOrder, order.id));
+          }
+          elements.ordersList.append(card);
+        }
+      }
+
+      function waitingMessage(text) {
+        const message = document.createElement('div');
+        message.className = 'waiting';
+        message.textContent = text;
+        return message;
+      }
+
+      function openDelay(id) {
+        state.delayOrderId = id;
+        elements.delayReason.value = '';
+        elements.delayDialog.hidden = false;
+        elements.delayReason.focus();
+      }
+
+      function closeDelay() {
+        elements.delayDialog.hidden = true;
+        state.delayOrderId = null;
+      }
+
+      function persistAndRender() {
+        writeStore();
+        renderOrders();
+      }
+
+      function markDelivered(id) {
+        const order = state.orders.find(item => item.id === id);
+        if (!order) return;
+        order.status = 'DELIVERED';
+        persistAndRender();
+      }
+
+      function confirmOrder(id) {
+        const order = state.orders.find(item => item.id === id);
+        if (!order) return;
+        if (state.role === 'buyer') order.buyerChecked = true;
+        else order.sellerChecked = true;
+        if (order.buyerChecked && order.sellerChecked) order.status = 'DONE';
+        persistAndRender();
+      }
+
+      function deleteOrder(id) {
+        state.orders = state.orders.filter(item => item.id !== id);
+        persistAndRender();
+      }
+
+      document.querySelectorAll('[data-quantity]').forEach(button => {
+        button.addEventListener('click', () => {
+          state.quantity = Number(button.dataset.quantity);
+          document.querySelectorAll('[data-quantity]').forEach(option => option.setAttribute('aria-pressed', String(option === button)));
+          updateTotal();
+        });
+      });
+      elements.buyerRole.addEventListener('click', () => setRole('buyer'));
+      elements.sellerRole.addEventListener('click', () => setRole('seller'));
+      document.getElementById('submitRequest').addEventListener('click', () => {
+        const pricePer = state.currentPrice;
+        state.orders.unshift({
+          id: `ord-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          qty: state.quantity, pricePer, total: state.quantity * pricePer,
+          status: 'REQUESTED', timestamp: Date.now(), delayReason: '', buyerChecked: false, sellerChecked: false
+        });
+        persistAndRender();
+      });
+      document.getElementById('savePrice').addEventListener('click', () => {
+        const value = Number(elements.sellerPrice.value);
+        if (!Number.isFinite(value) || value <= 0 || value > 9999) {
+          elements.sellerPrice.setCustomValidity('Enter a price greater than $0 and no more than $9,999.');
+          elements.sellerPrice.reportValidity();
+          return;
+        }
+        elements.sellerPrice.setCustomValidity('');
+        state.currentPrice = Math.round(value * 100) / 100;
+        updateTotal();
+        writeStore();
+      });
+      elements.sellerPrice.addEventListener('input', () => elements.sellerPrice.setCustomValidity(''));
+      document.getElementById('cancelDelay').addEventListener('click', closeDelay);
+      document.getElementById('confirmDelay').addEventListener('click', () => {
+        const order = state.orders.find(item => item.id === state.delayOrderId);
+        if (order) {
+          order.status = 'DELAYED';
+          order.delayReason = elements.delayReason.value.trim() || 'Delayed by seller';
+          persistAndRender();
+        }
+        closeDelay();
+      });
+      elements.delayDialog.addEventListener('click', event => { if (event.target === elements.delayDialog) closeDelay(); });
+      document.addEventListener('keydown', event => { if (event.key === 'Escape' && !elements.delayDialog.hidden) closeDelay(); });
+      window.addEventListener('storage', event => {
+        if (event.key !== STORAGE_KEY) return;
+        readStore();
+        updateTotal();
+        renderOrders();
+      });
+
+      readStore();
+      updateTotal();
+      renderOrders();
+    })();
+  </script>
+</body>
+</html>
